@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{ABAE8A61-E20F-45AF-83C6-C0A13B91C4AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Domain", "src/Minisplitwise.Domain/Minisplitwise.Domain.csproj", "{F6B394A1-61DC-4E40-A95C-646C9DC654FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Domain", "src\Minisplitwise.Domain\Minisplitwise.Domain.csproj", "{F6B394A1-61DC-4E40-A95C-646C9DC654FE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Application", "src/Minisplitwise.Application/Minisplitwise.Application.csproj", "{71C32963-00C6-4891-A522-FDC890BAF534}"
 EndProject
