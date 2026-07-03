@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Minisplitwise.Domain\Minisplitwise.Domain.csproj" />
-    <ProjectReference Include="..\Minisplitwise.Application\Minisplitwise.Application.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+    <ProjectReference Include="..\Minisplitwise.Application\MiniSplitwise.Application.csproj" />
+    <ProjectReference Include="..\Minisplitwise.Domain\MiniSplitwise.Domain.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
