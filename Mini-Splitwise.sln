@@ -5,17 +5,17 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{ABAE8A61-E20F-45AF-83C6-C0A13B91C4AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Domain", "src\Minisplitwise.Domain\Minisplitwise.Domain.csproj", "{F6B394A1-61DC-4E40-A95C-646C9DC654FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Domain", "src/Minisplitwise.Domain/MiniSplitwise.Domain.csproj", "{F6B394A1-61DC-4E40-A95C-646C9DC654FE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Application", "src/Minisplitwise.Application/Minisplitwise.Application.csproj", "{71C32963-00C6-4891-A522-FDC890BAF534}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Application", "src/Minisplitwise.Application/MiniSplitwise.Application.csproj", "{71C32963-00C6-4891-A522-FDC890BAF534}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Infrastructure", "src/Minisplitwise.Infrastructure/Minisplitwise.Infrastructure.csproj", "{69530DAE-0B9D-40F1-8FCD-016213598D91}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Infrastructure", "src/Minisplitwise.Infrastructure/MiniSplitwise.Infrastructure.csproj", "{69530DAE-0B9D-40F1-8FCD-016213598D91}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.API", "src/Minisplitwise.API/Minisplitwise.API.csproj", "{365A162C-8FBE-4B4D-A773-9ED46723A9EE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.API", "src/Minisplitwise.API/MiniSplitwise.API.csproj", "{365A162C-8FBE-4B4D-A773-9ED46723A9EE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{82B42F8D-1935-48C4-A2CA-A3C7C0B8E070}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Tests", "tests/Minisplitwise.Tests/Minisplitwise.Tests.csproj", "{6D2D4F81-67D0-461E-93A7-4A01BD6B8FE2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minisplitwise.Tests", "tests/Minisplitwise.Tests/MiniSplitwise.Tests.csproj", "{6D2D4F81-67D0-461E-93A7-4A01BD6B8FE2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
