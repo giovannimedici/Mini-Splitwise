@@ -12,8 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Minisplitwise.Application\Minisplitwise.Application.csproj" />
-    <ProjectReference Include="..\Minisplitwise.Infrastructure\Minisplitwise.Infrastructure.csproj" />
+    <ProjectReference Include="..\Minisplitwise.Application\MiniSplitwise.Application.csproj" />
+    <ProjectReference Include="..\Minisplitwise.Infrastructure\MiniSplitwise.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
