@@ -8,7 +8,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        services.AddScoped<IMemberRepository, MemberRepository>();
+        //change to scoped when implementing database
+        services.AddSingleton<IMemberRepository, MemberRepository>();
         
         return services;
     }

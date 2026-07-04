@@ -6,5 +6,5 @@ namespace Minisplitwise.Application.Interfaces;
 public interface IMemberRepository
 {
     Task<Member> CreateMemberAsync(MemberRequestDto memberRequestDto, CancellationToken cancellationToken = default);
-    Task<List<Member>> GetAllMembersAsync();
+    Task<List<Member>> GetAllMembersAsync(CancellationToken cancellationToken = default);
 }

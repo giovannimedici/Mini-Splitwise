@@ -19,4 +19,11 @@ public class MemberService : IMemberService
         
         return new MemberResponseDto(member.Id, member.Name, member.Email, member.BirthDate);
     }
+
+    public async Task<List<MemberResponseDto>> GetAllMembersAsync(CancellationToken cancellationToken = default)
+    {
+        var members = await _memberRepository.GetAllMembersAsync(cancellationToken);
+
+        return members.Select(member => new MemberResponseDto(member.Id, member.Name, member.Email, member.BirthDate)).ToList();
+    }
 }
