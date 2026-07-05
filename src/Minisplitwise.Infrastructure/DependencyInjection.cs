@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Minisplitwise.Application.Interfaces;
+using Minisplitwise.Domain.Interfaces;
 using Minisplitwise.Infrastructure.Data.Repositories;
 
 namespace Minisplitwise.Infrastructure;
