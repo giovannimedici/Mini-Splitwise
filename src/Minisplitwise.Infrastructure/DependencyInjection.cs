@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Minisplitwise.Application.Interfaces;
+using Minisplitwise.Domain.Interfaces;
 using Minisplitwise.Infrastructure.Data.Repositories;
 
 namespace Minisplitwise.Infrastructure;
@@ -8,8 +8,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        services.AddScoped<IMemberRepository, MemberRepository>();
-        
+        //change to scoped when implementing database
+        services.AddSingleton<IMemberRepository, MemberRepository>();
+        services.AddSingleton<IGroupRepository, GroupRepository>();
         return services;
     }
 }

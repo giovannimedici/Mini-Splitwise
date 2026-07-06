@@ -13,7 +13,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Minisplitwise API",
         Version = "v1",
-        Description = "Minisplitwise API"
+        Description = "REST API for managing shared expenses. Register members, create groups, and add participants to groups — the foundation for splitting bills among friends."
     });
 });
 builder.Services.AddApplication();
@@ -32,5 +32,6 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 app.MapMemberEndpoints();
+app.MapGroupEndpoints();
 
 app.Run();
