@@ -1,6 +1,6 @@
 using Minisplitwise.Domain.Interfaces;
 using Minisplitwise.Application.Members;
-using Minisplitwise.Application.Services.Interfaces;
+using Minisplitwise.Application.Interfaces;
 using Minisplitwise.Domain.Entities;
 
 namespace Minisplitwise.Application.Services;

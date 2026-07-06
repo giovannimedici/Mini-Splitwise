@@ -1,5 +1,5 @@
 using Minisplitwise.Application.Members;
-using Minisplitwise.Application.Services.Interfaces;
+using Minisplitwise.Application.Interfaces;
 
 namespace Minisplitwise.API.Endpoints;
 
@@ -24,7 +24,7 @@ public static class MemberEndpoints
     {
         var member = await memberService.CreateMemberAsync(memberRequestDto, cancellationToken);
 
-        return Results.Ok(member);
+        return Results.Created($"/members/{member.Id}", member);
     }
     public static async Task<IResult> GetAllMembersAsync(IMemberService memberService, CancellationToken cancellationToken)
     {

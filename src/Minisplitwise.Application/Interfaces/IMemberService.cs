@@ -1,6 +1,6 @@
 using Minisplitwise.Application.Members;
 
-namespace Minisplitwise.Application.Services.Interfaces;
+namespace Minisplitwise.Application.Interfaces;
 
 public interface IMemberService
 {

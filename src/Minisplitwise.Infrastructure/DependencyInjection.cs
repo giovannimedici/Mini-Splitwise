@@ -10,7 +10,7 @@ public static class DependencyInjection
     {
         //change to scoped when implementing database
         services.AddSingleton<IMemberRepository, MemberRepository>();
-        
+        services.AddSingleton<IGroupRepository, GroupRepository>();
         return services;
     }
 }
