@@ -11,7 +11,7 @@ public sealed class Expense{
     public List<Member> SharedWith { get; private set; } = new();
 
     private Expense() {}
-    public static Expense Create(string description, decimal amount, DateTime date, Group group, Member paidBy, bool forEveryone, List<Member> sharedBy, List<Member> sharedWith){
+    public static Expense Create(string description, decimal amount, DateTime date, Group group, Member paidBy, bool forEveryone, List<Member> sharedWith){
         return new Expense{
             Id = Guid.NewGuid(),
             Description = description,
