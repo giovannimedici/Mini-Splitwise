@@ -22,7 +22,6 @@ public class ExpenseTests
         var expense = Expense.Create(
             "Dinner", 100m, date, group, payer,
             forEveryone: false,
-            sharedBy: new List<Member>(),
             sharedWith: sharedWith);
 
         Assert.NotEqual(Guid.Empty, expense.Id);
@@ -45,7 +44,6 @@ public class ExpenseTests
         var expense = Expense.Create(
             "Hotel", 500m, DateTime.Today, group, payer,
             forEveryone: true,
-            sharedBy: new List<Member>(),
             sharedWith: new List<Member>());
 
         Assert.True(expense.ForEveryone);
@@ -58,8 +56,8 @@ public class ExpenseTests
         var other = CreateMember("Jane", "jane@example.com");
         var group = CreateGroup(payer, other);
 
-        var first = Expense.Create("A", 10m, DateTime.Today, group, payer, true, new List<Member>(), new List<Member>());
-        var second = Expense.Create("B", 20m, DateTime.Today, group, payer, true, new List<Member>(), new List<Member>());
+        var first = Expense.Create("A", 10m, DateTime.Today, group, payer, true, new List<Member>());
+        var second = Expense.Create("B", 20m, DateTime.Today, group, payer, true, new List<Member>());
 
         Assert.NotEqual(first.Id, second.Id);
     }

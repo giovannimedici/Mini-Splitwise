@@ -33,5 +33,6 @@ app.UseHttpsRedirection();
 
 app.MapMemberEndpoints();
 app.MapGroupEndpoints();
+app.MapExpenseEndpoints();
 
 app.Run();
