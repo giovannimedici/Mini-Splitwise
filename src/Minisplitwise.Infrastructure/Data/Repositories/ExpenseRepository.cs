@@ -19,4 +19,9 @@ public class ExpenseRepository : IExpenseRepository
     {
         return await Task.FromResult(_expenses.Values.Where(e => e.Group.Id == groupId).ToList());
     }
+
+    public async Task<List<Expense>> GetExpensesByMemberIdAsync(Guid memberId, Guid groupId, CancellationToken cancellationToken = default)
+    {
+        return await Task.FromResult(_expenses.Values.Where(e => e.Group.Id == groupId && e.SharedWith.Any(m => m.Id == memberId)).ToList());
+    }
 }

@@ -59,4 +59,20 @@ public class ExpenseService(
             e.SharedWith.Select(m => new MemberDto(m.Id, m.Name)).ToList()
         )).ToList());
     }
+
+    public async Task<List<ExpenseMemberResponseDto>> GetExpensesByMemberIdAsync(Guid memberId, Guid groupId, CancellationToken cancellationToken = default)
+    {
+        var expenses = await expenseRepository.GetExpensesByMemberIdAsync(memberId, groupId, cancellationToken);
+
+        return await Task.FromResult(expenses.Select(e => new ExpenseMemberResponseDto(
+            e.Id,
+            e.Description,
+            e.Amount / (e.SharedWith.Count + 1),
+            e.Date,
+            new MemberDto(memberId, e.SharedWith.First(m => m.Id == memberId).Name),
+            new MemberDto(e.PaidBy.Id, e.PaidBy.Name)
+        )).ToList());
+    }
+
+    
 }

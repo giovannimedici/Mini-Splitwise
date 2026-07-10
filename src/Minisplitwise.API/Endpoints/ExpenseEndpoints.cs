@@ -18,6 +18,12 @@ public static class ExpenseEndpoints
             .WithTags("Expenses")
             .WithSummary("Get all expenses by group id")
             .WithDescription("Get all expenses by group id");
+        
+        app.MapGet("/expenses/{memberId}/{groupId}", GetExpensesByMemberIdAsync)
+            .WithName("GetExpensesByMemberId")
+            .WithTags("Expenses")
+            .WithSummary("Get all expenses by member id and group id")
+            .WithDescription("Get all expenses by member id and group id");
     }
 
     public static async Task<IResult> CreateExpenseAsync(ExpenseRequestDto expenseRequestDto, IExpenseService expenseService, CancellationToken cancellationToken)
@@ -30,6 +36,13 @@ public static class ExpenseEndpoints
     public static async Task<IResult> GetExpensesByGroupIdAsync(Guid groupId, IExpenseService expenseService, CancellationToken cancellationToken)
     {
         var expenses = await expenseService.GetExpensesByGroupIdAsync(groupId, cancellationToken);
+
+        return Results.Ok(expenses);
+    }
+
+    public static async Task<IResult> GetExpensesByMemberIdAsync(Guid memberId, Guid groupId, IExpenseService expenseService, CancellationToken cancellationToken)
+    {
+        var expenses = await expenseService.GetExpensesByMemberIdAsync(memberId, groupId, cancellationToken);
 
         return Results.Ok(expenses);
     }
