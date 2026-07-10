@@ -284,4 +284,223 @@ public class ExpenseServiceTests
         Assert.Equal(sharedMember.Id, dto.SharedWith[0].Id);
         Assert.Equal("Jane Smith", dto.SharedWith[0].Name);
     }
+
+    [Fact]
+    public async Task GetExpensesByMemberIdAsync_ReturnsMappedExpenseMemberDtos()
+    {
+        var payer = CreateMember("John", "john@example.com");
+        var member = CreateMember("Jane", "jane@example.com");
+        var group = CreateGroup("Trip", payer, member);
+        var sharedWith = new List<Member> { member };
+
+        var expense1 = Expense.Create("Dinner", 100m, new DateTime(2026, 7, 1), group, payer, false, sharedWith);
+        var expense2 = Expense.Create("Lunch", 60m, new DateTime(2026, 7, 2), group, payer, false, sharedWith);
+
+        var expenses = new List<Expense> { expense1, expense2 };
+
+        _expenseRepository.GetExpensesByMemberIdAsync(member.Id, group.Id, Arg.Any<CancellationToken>()).Returns(expenses);
+
+        var response = await _service.GetExpensesByMemberIdAsync(member.Id, group.Id);
+
+        Assert.Equal(2, response.Count);
+
+        Assert.Equal(expense1.Id, response[0].Id);
+        Assert.Equal("Dinner", response[0].Description);
+        Assert.Equal(50m, response[0].Amount); // 100 / 2
+        Assert.Equal(member.Id, response[0].Member.Id);
+        Assert.Equal(payer.Id, response[0].PaidBy.Id);
+
+        Assert.Equal(expense2.Id, response[1].Id);
+        Assert.Equal("Lunch", response[1].Description);
+        Assert.Equal(30m, response[1].Amount); // 60 / 2
+    }
+
+    [Fact]
+    public async Task GetExpensesByMemberIdAsync_WhenNoExpenses_ReturnsEmptyList()
+    {
+        var memberId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        _expenseRepository.GetExpensesByMemberIdAsync(memberId, groupId, Arg.Any<CancellationToken>())
+            .Returns(new List<Expense>());
+
+        var response = await _service.GetExpensesByMemberIdAsync(memberId, groupId);
+
+        Assert.Empty(response);
+    }
+
+    [Fact]
+    public async Task GetExpensesByMemberIdAsync_DividesAmountCorrectly_WithMultipleSharedMembers()
+    {
+        var payer = CreateMember("John", "john@example.com");
+        var member1 = CreateMember("Jane", "jane@example.com");
+        var member2 = CreateMember("Bob", "bob@example.com");
+        var member3 = CreateMember("Alice", "alice@example.com");
+        var group = CreateGroup("Trip", payer, member1, member2, member3);
+        var sharedWith = new List<Member> { member1, member2, member3 };
+
+        var expense = Expense.Create("Hotel", 400m, DateTime.Today, group, payer, false, sharedWith);
+        var expenses = new List<Expense> { expense };
+
+        _expenseRepository.GetExpensesByMemberIdAsync(member1.Id, group.Id, Arg.Any<CancellationToken>()).Returns(expenses);
+
+        var response = await _service.GetExpensesByMemberIdAsync(member1.Id, group.Id);
+
+        Assert.Single(response);
+        Assert.Equal(100m, response[0].Amount); // 400 / (3 + 1)
+    }
+
+    [Fact]
+    public async Task CalculatePaymentsByGroupIdAsync_WithSimpleScenario_ReturnsOptimizedPayments()
+    {
+        var john = CreateMember("John", "john@example.com");
+        var jane = CreateMember("Jane", "jane@example.com");
+        var group = CreateGroup("Trip", john, jane);
+
+        var expense = Expense.Create("Dinner", 100m, DateTime.Today, group, john, false, new List<Member> { jane });
+        var expenses = new List<Expense> { expense };
+
+        _expenseRepository.GetExpensesByGroupIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(expenses);
+        _groupRepository.GetGroupByIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(group);
+
+        var response = await _service.CalculatePaymentsByGroupIdAsync(group.Id);
+
+        Assert.Single(response);
+        Assert.Equal(50m, response[0].Amount);
+        Assert.Equal(jane.Id, response[0].WhoPays.Id);
+        Assert.Equal(john.Id, response[0].WhoReceives.Id);
+    }
+
+    [Fact]
+    public async Task CalculatePaymentsByGroupIdAsync_WithNoExpenses_ReturnsEmptyList()
+    {
+        var john = CreateMember("John", "john@example.com");
+        var jane = CreateMember("Jane", "jane@example.com");
+        var group = CreateGroup("Trip", john, jane);
+
+        _expenseRepository.GetExpensesByGroupIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(new List<Expense>());
+        _groupRepository.GetGroupByIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(group);
+
+        var response = await _service.CalculatePaymentsByGroupIdAsync(group.Id);
+
+        Assert.Empty(response);
+    }
+
+    [Fact]
+    public async Task CalculatePaymentsByGroupIdAsync_WithComplexScenario_ReturnsOptimizedPayments()
+    {
+        var john = CreateMember("John", "john@example.com");
+        var jane = CreateMember("Jane", "jane@example.com");
+        var bob = CreateMember("Bob", "bob@example.com");
+        var group = CreateGroup("Trip", john, jane, bob);
+
+        var expense1 = Expense.Create("Hotel", 300m, DateTime.Today, group, john, false, new List<Member> { jane, bob });
+        var expense2 = Expense.Create("Dinner", 150m, DateTime.Today, group, jane, false, new List<Member> { john, bob });
+        var expense3 = Expense.Create("Transport", 90m, DateTime.Today, group, bob, false, new List<Member> { john, jane });
+        
+        var expenses = new List<Expense> { expense1, expense2, expense3 };
+
+        _expenseRepository.GetExpensesByGroupIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(expenses);
+        _groupRepository.GetGroupByIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(group);
+
+        var response = await _service.CalculatePaymentsByGroupIdAsync(group.Id);
+
+        Assert.NotEmpty(response);
+        
+        var totalPayments = response.Sum(p => p.Amount);
+        Assert.True(totalPayments > 0);
+        
+        var johnBalance = response.Where(p => p.WhoReceives.Id == john.Id).Sum(p => p.Amount)
+                        - response.Where(p => p.WhoPays.Id == john.Id).Sum(p => p.Amount);
+        var janeBalance = response.Where(p => p.WhoReceives.Id == jane.Id).Sum(p => p.Amount)
+                        - response.Where(p => p.WhoPays.Id == jane.Id).Sum(p => p.Amount);
+        var bobBalance = response.Where(p => p.WhoReceives.Id == bob.Id).Sum(p => p.Amount)
+                       - response.Where(p => p.WhoPays.Id == bob.Id).Sum(p => p.Amount);
+        
+        Assert.Equal(0m, Math.Round(johnBalance + janeBalance + bobBalance, 2));
+    }
+
+    [Fact]
+    public async Task CalculatePaymentsByGroupIdAsync_WithMultiplePayers_OptimizesPayments()
+    {
+        var alice = CreateMember("Alice", "alice@example.com");
+        var bob = CreateMember("Bob", "bob@example.com");
+        var charlie = CreateMember("Charlie", "charlie@example.com");
+        var group = CreateGroup("Trip", alice, bob, charlie);
+
+        var expense1 = Expense.Create("Hotel", 600m, DateTime.Today, group, alice, false, new List<Member> { bob, charlie });
+        var expense2 = Expense.Create("Food", 300m, DateTime.Today, group, bob, false, new List<Member> { alice, charlie });
+        
+        var expenses = new List<Expense> { expense1, expense2 };
+
+        _expenseRepository.GetExpensesByGroupIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(expenses);
+        _groupRepository.GetGroupByIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(group);
+
+        var response = await _service.CalculatePaymentsByGroupIdAsync(group.Id);
+
+        Assert.NotEmpty(response);
+        Assert.True(response.Count <= 2, "Optimized payments should minimize transactions");
+    }
+
+    [Fact]
+    public async Task CalculatePaymentsByGroupIdAsync_WithBalancedExpenses_ReturnsNoPayments()
+    {
+        var john = CreateMember("John", "john@example.com");
+        var jane = CreateMember("Jane", "jane@example.com");
+        var group = CreateGroup("Trip", john, jane);
+
+        var expense1 = Expense.Create("Dinner", 100m, DateTime.Today, group, john, false, new List<Member> { jane });
+        var expense2 = Expense.Create("Lunch", 100m, DateTime.Today, group, jane, false, new List<Member> { john });
+        
+        var expenses = new List<Expense> { expense1, expense2 };
+
+        _expenseRepository.GetExpensesByGroupIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(expenses);
+        _groupRepository.GetGroupByIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(group);
+
+        var response = await _service.CalculatePaymentsByGroupIdAsync(group.Id);
+
+        Assert.Empty(response);
+    }
+
+    [Fact]
+    public async Task CalculatePaymentsByGroupIdAsync_WithSingleExpense_ReturnsSinglePayment()
+    {
+        var payer = CreateMember("John", "john@example.com");
+        var member1 = CreateMember("Jane", "jane@example.com");
+        var member2 = CreateMember("Bob", "bob@example.com");
+        var group = CreateGroup("Trip", payer, member1, member2);
+
+        var expense = Expense.Create("Hotel", 300m, DateTime.Today, group, payer, false, new List<Member> { member1, member2 });
+        var expenses = new List<Expense> { expense };
+
+        _expenseRepository.GetExpensesByGroupIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(expenses);
+        _groupRepository.GetGroupByIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(group);
+
+        var response = await _service.CalculatePaymentsByGroupIdAsync(group.Id);
+
+        Assert.Equal(2, response.Count);
+        Assert.All(response, payment =>
+        {
+            Assert.Equal(100m, payment.Amount);
+            Assert.Equal(payer.Id, payment.WhoReceives.Id);
+        });
+    }
+
+    [Fact]
+    public async Task CalculatePaymentsByGroupIdAsync_EnsuresNoDuplicatePayments()
+    {
+        var john = CreateMember("John", "john@example.com");
+        var jane = CreateMember("Jane", "jane@example.com");
+        var group = CreateGroup("Trip", john, jane);
+
+        var expense = Expense.Create("Dinner", 200m, DateTime.Today, group, john, false, new List<Member> { jane });
+        var expenses = new List<Expense> { expense };
+
+        _expenseRepository.GetExpensesByGroupIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(expenses);
+        _groupRepository.GetGroupByIdAsync(group.Id, Arg.Any<CancellationToken>()).Returns(group);
+
+        var response = await _service.CalculatePaymentsByGroupIdAsync(group.Id);
+
+        var paymentPairs = response.Select(p => $"{p.WhoPays.Id}-{p.WhoReceives.Id}").ToList();
+        Assert.Equal(paymentPairs.Count, paymentPairs.Distinct().Count());
+    }
 }

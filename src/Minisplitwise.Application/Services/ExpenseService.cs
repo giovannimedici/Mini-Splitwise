@@ -2,6 +2,7 @@ using Minisplitwise.Application.Expenses;
 using Minisplitwise.Application.Groups;
 using Minisplitwise.Application.Interfaces;
 using Minisplitwise.Application.Members;
+using Minisplitwise.Application.Payments;
 using Minisplitwise.Domain.Entities;
 using Minisplitwise.Domain.Interfaces;
 
@@ -74,5 +75,88 @@ public class ExpenseService(
         )).ToList());
     }
 
-    
+    public async Task<List<PaymentResponseDto>> CalculatePaymentsByGroupIdAsync(Guid groupId, CancellationToken cancellationToken = default)
+    {
+        var expenses = await expenseRepository.GetExpensesByGroupIdAsync(groupId, cancellationToken);
+
+        var payments = new List<PaymentResponseDto>();
+
+        var group = await groupRepository.GetGroupByIdAsync(groupId, cancellationToken);
+
+        var members = group.Members.ToList();
+
+        foreach (var expense in expenses)
+        {
+            foreach (var sharedWith in expense.SharedWith)
+            {
+                payments.Add(new PaymentResponseDto(
+                    expense.Id,
+                    expense.Amount / (expense.SharedWith.Count + 1),
+                    new MemberDto(sharedWith.Id, sharedWith.Name),
+                    new MemberDto(expense.PaidBy.Id, expense.PaidBy.Name)
+                ));
+            }
+        }
+
+        payments = CalculatePayments(payments, members);
+
+        return await Task.FromResult(payments);
+    }
+
+    private static List<PaymentResponseDto> CalculatePayments(List<PaymentResponseDto> payments, List<Member> members)
+    {
+        List<PaymentResponseDto> newPayments = new();
+        Dictionary<MemberDto, decimal> memberBalances = new();
+
+        foreach (var payment in payments)
+        {
+            if (!memberBalances.ContainsKey(payment.WhoPays)) memberBalances[payment.WhoPays] = 0;
+            if (!memberBalances.ContainsKey(payment.WhoReceives)) memberBalances[payment.WhoReceives] = 0;
+
+            memberBalances[payment.WhoPays] -= payment.Amount;
+            memberBalances[payment.WhoReceives] += payment.Amount;
+        }
+
+        var whoPaysList = memberBalances.Where(x => x.Value < 0)
+                                    .Select(x => new MemberBalance { Id = x.Key.Id, Name = x.Key.Name, Balance = x.Value })
+                                    .OrderBy(x => x.Balance)
+                                    .ToList();
+
+        var whoReceivesList = memberBalances.Where(x => x.Value > 0)
+                                        .Select(x => new MemberBalance { Id = x.Key.Id, Name = x.Key.Name, Balance = x.Value })
+                                        .OrderBy(x => x.Balance)
+                                        .ToList();
+
+        int i = 0, j = 0;
+
+        while (i < whoPaysList.Count && j < whoReceivesList.Count)
+        {
+            var whoPays = whoPaysList[i];
+            var whoReceives = whoReceivesList[j];
+
+            decimal valueTransfer = Math.Min(-whoPays.Balance, whoReceives.Balance);
+
+            newPayments.Add(new PaymentResponseDto(
+                Guid.NewGuid(),
+                valueTransfer,
+                new MemberDto(whoPays.Id, whoPays.Name),
+                new MemberDto(whoReceives.Id, whoReceives.Name)
+            ));
+
+            whoPays.Balance += valueTransfer;
+            whoReceives.Balance -= valueTransfer;
+
+            if (Math.Abs(whoPays.Balance) < 0.01m) i++;
+            if (Math.Abs(whoReceives.Balance) < 0.01m) j++;
+        }
+
+        return newPayments;
+    }
+
+    private class MemberBalance
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Balance { get; set; }
+    }
 }

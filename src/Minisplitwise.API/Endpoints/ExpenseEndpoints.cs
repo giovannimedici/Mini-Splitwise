@@ -24,6 +24,12 @@ public static class ExpenseEndpoints
             .WithTags("Expenses")
             .WithSummary("Get all expenses by member id and group id")
             .WithDescription("Get all expenses by member id and group id");
+            
+        app.MapGet("/expenses/{groupId}/payments", CalculatePaymentsByGroupIdAsync)
+            .WithName("CalculatePaymentsByGroupId")
+            .WithTags("Expenses")
+            .WithSummary("Calculate payments by group id")
+            .WithDescription("Calculate payments by group id");
     }
 
     public static async Task<IResult> CreateExpenseAsync(ExpenseRequestDto expenseRequestDto, IExpenseService expenseService, CancellationToken cancellationToken)
@@ -45,5 +51,12 @@ public static class ExpenseEndpoints
         var expenses = await expenseService.GetExpensesByMemberIdAsync(memberId, groupId, cancellationToken);
 
         return Results.Ok(expenses);
+    }
+
+    public static async Task<IResult> CalculatePaymentsByGroupIdAsync(Guid groupId, IExpenseService expenseService, CancellationToken cancellationToken)
+    {
+        var payments = await expenseService.CalculatePaymentsByGroupIdAsync(groupId, cancellationToken);
+
+        return Results.Ok(payments);
     }
 }
