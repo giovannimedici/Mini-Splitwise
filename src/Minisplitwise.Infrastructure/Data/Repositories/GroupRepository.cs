@@ -1,18 +1,18 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using Microsoft.EntityFrameworkCore;
 using Minisplitwise.Domain.Entities;
 using Minisplitwise.Domain.Exceptions;
 using Minisplitwise.Domain.Interfaces;
 
 namespace Minisplitwise.Infrastructure.Data.Repositories;
 
-public class GroupRepository : IGroupRepository
+public class GroupRepository(MinisplitwiseDbContext context) : IGroupRepository
 {
-    private readonly ConcurrentDictionary<Guid, Group> _groups = new();
-
     public async Task<Group> CreateGroupAsync(Group group, CancellationToken cancellationToken = default)
     {
-        await Task.FromResult(_groups.TryAdd(group.Id, group));
+        await context.Groups.AddAsync(group, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return group;
     }
@@ -20,17 +20,16 @@ public class GroupRepository : IGroupRepository
     public async Task<Group> AddMemberToGroupAsync(Group group, Member member, CancellationToken cancellationToken = default)
     {
         group.Members.Add(member);
+        await context.SaveChangesAsync(cancellationToken);
 
-        return await Task.FromResult(group);
+        return group;
     }
 
     public async Task<Group> GetGroupByIdAsync(Guid groupId, CancellationToken cancellationToken = default)
     {
-        if(!_groups.TryGetValue(groupId, out var group))
-        {
-            throw new NotFoundException("Group not found.");
-        }
+        var group = await context.Groups.FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken)
+            ?? throw new NotFoundException("Group not found.");
 
-        return await Task.FromResult(group);
+        return group;
     }
 }
