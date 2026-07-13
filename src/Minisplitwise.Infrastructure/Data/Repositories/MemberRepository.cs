@@ -1,45 +1,58 @@
-using System.Collections.Concurrent;
 using Minisplitwise.Domain.Interfaces;
 using Minisplitwise.Domain.Entities;
 using Minisplitwise.Domain.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Minisplitwise.Infrastructure.Data.Repositories;
 
-public class MemberRepository : IMemberRepository
+public class MemberRepository(MinisplitwiseDbContext context) : IMemberRepository
 {
-    private readonly ConcurrentDictionary<Guid, Member> _members = new();
 
     public async Task<Member> CreateMemberAsync(Member member, CancellationToken cancellationToken = default)
     {
-        await Task.FromResult(_members.TryAdd(member.Id, member));
+        await context.Members.AddAsync(member, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return member;
     }
 
     public async Task<List<Member>> GetAllMembersAsync(CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(_members.Values.ToList());
+        return await context.Members.ToListAsync(cancellationToken);
     }
 
     public async Task<List<Member>> GetMembersByIdsAsync(List<Guid> memberIds, CancellationToken cancellationToken = default)
     {
-        var missingIds = memberIds.Where(id => !_members.ContainsKey(id)).ToList();
 
-        if (missingIds.Count > 0)
+        Console.WriteLine(memberIds.Count);
+        Console.WriteLine(string.Join(", ", memberIds));
+        Console.WriteLine("--------------------------------");
+
+        var members = await context.Members
+                                    .Where(m => memberIds.Contains(m.Id))
+                                    .ToListAsync(cancellationToken);
+
+        Console.WriteLine(memberIds.Count);
+        Console.WriteLine(string.Join(", ", memberIds));
+
+        if (members.Count != memberIds.Count)
         {
+            var foundIds = members.Select(m => m.Id).ToList();
+            var missingIds = memberIds.Where(id => !foundIds.Contains(id))
+                                       .Select(id => id.ToString())
+                                       .ToList();
+            
             throw new NotFoundException($"Members not found: {string.Join(", ", missingIds)}");
         }
 
-        return await Task.FromResult(memberIds.Select(id => _members[id]).ToList());
+        return members;
     }
 
     public async Task<Member> GetMemberByIdAsync(Guid memberId, CancellationToken cancellationToken = default)
     {
-        if(!_members.TryGetValue(memberId, out var member))
-        {
-            throw new NotFoundException("Member not found.");
-        }
+        var member = await context.Members.FirstOrDefaultAsync(m => m.Id == memberId, cancellationToken)
+            ?? throw new NotFoundException("Member not found.");
 
-        return await Task.FromResult(member);
+        return member;
     }
 }

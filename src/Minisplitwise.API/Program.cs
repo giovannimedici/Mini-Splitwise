@@ -3,6 +3,7 @@ using Minisplitwise.Infrastructure;
 using Minisplitwise.API.Endpoints;
 using Minisplitwise.API.Middlewares;
 using Microsoft.OpenApi.Models;
+using Minisplitwise.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +18,11 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
+
+await app.ApplyMigrationsAsync();
 
 if (app.Environment.IsDevelopment())
 {
