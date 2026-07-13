@@ -58,3 +58,6 @@ nunit-*.xml
 
 .env
 .DS_Store
+*.db
+*.db-shm
+*.db-wal
