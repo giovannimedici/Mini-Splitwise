@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Minisplitwise.Infrastructure.Data;
 
-namespace FinanceFlow.Infrastructure.Data;
+namespace MiniSplitwise.Infrastructure.Data;
 
 public class MinisplitwiseDbContextFactory
     : IDesignTimeDbContextFactory<MinisplitwiseDbContext>
