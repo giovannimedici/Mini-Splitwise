@@ -1,5 +1,6 @@
 using Minisplitwise.Application.Members;
 using Minisplitwise.Application.Interfaces;
+using FluentValidation;
 
 namespace Minisplitwise.API.Endpoints;
 
@@ -20,8 +21,19 @@ public static class MemberEndpoints
             .WithDescription("Get all members");
     }
 
-    public static async Task<IResult> CreateMemberAsync(MemberRequestDto memberRequestDto, IMemberService memberService, CancellationToken cancellationToken)
+    public static async Task<IResult> CreateMemberAsync(
+        MemberRequestDto memberRequestDto, 
+        IMemberService memberService,
+        IValidator<MemberRequestDto> validator,
+        CancellationToken cancellationToken)
     {
+        var validationResult = await validator.ValidateAsync(memberRequestDto, cancellationToken);
+        
+        if (!validationResult.IsValid)
+        {
+            return Results.ValidationProblem(validationResult.ToDictionary(), "Validation error");
+        }
+
         var member = await memberService.CreateMemberAsync(memberRequestDto, cancellationToken);
 
         return Results.Created($"/members/{member.Id}", member);

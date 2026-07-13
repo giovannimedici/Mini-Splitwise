@@ -1,5 +1,6 @@
 using Minisplitwise.Application.Groups;
 using Minisplitwise.Application.Interfaces;
+using FluentValidation;
 
 namespace Minisplitwise.API.Endpoints;
 
@@ -20,8 +21,19 @@ public static class GroupEndpoints
             .WithDescription("Add a member to a group with the given group id and member id");
     }
 
-    public static async Task<IResult> CreateGroupAsync(GroupRequestDto groupRequestDto, IGroupService groupService, CancellationToken cancellationToken)
+    public static async Task<IResult> CreateGroupAsync(
+        GroupRequestDto groupRequestDto, 
+        IGroupService groupService, 
+        IValidator<GroupRequestDto> validator,
+        CancellationToken cancellationToken)
     {
+        var validationResult = await validator.ValidateAsync(groupRequestDto, cancellationToken);
+        
+        if (!validationResult.IsValid)
+        {
+            return Results.ValidationProblem(validationResult.ToDictionary(), "Validation error");
+        }
+
         var group = await groupService.CreateGroupAsync(groupRequestDto, cancellationToken);
 
         return Results.Created($"/groups/{group.Id}", group);

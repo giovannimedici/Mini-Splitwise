@@ -1,5 +1,6 @@
 using Minisplitwise.Application.Expenses;
 using Minisplitwise.Application.Interfaces;
+using FluentValidation;
 
 namespace Minisplitwise.API.Endpoints;
 
@@ -32,8 +33,19 @@ public static class ExpenseEndpoints
             .WithDescription("Calculate payments by group id");
     }
 
-    public static async Task<IResult> CreateExpenseAsync(ExpenseRequestDto expenseRequestDto, IExpenseService expenseService, CancellationToken cancellationToken)
+    public static async Task<IResult> CreateExpenseAsync(
+        ExpenseRequestDto expenseRequestDto, 
+        IExpenseService expenseService, 
+        IValidator<ExpenseRequestDto> validator,
+        CancellationToken cancellationToken)
     {
+        var validationResult = await validator.ValidateAsync(expenseRequestDto, cancellationToken);
+        
+        if (!validationResult.IsValid)
+        {
+            return Results.ValidationProblem(validationResult.ToDictionary(), "Validation error");
+        }
+
         var expense = await expenseService.CreateExpenseAsync(expenseRequestDto, cancellationToken);
 
         return Results.Created($"/expenses/{expense.Id}", expense);
