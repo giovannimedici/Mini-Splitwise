@@ -24,16 +24,10 @@ public class MemberRepository(MinisplitwiseDbContext context) : IMemberRepositor
     public async Task<List<Member>> GetMembersByIdsAsync(List<Guid> memberIds, CancellationToken cancellationToken = default)
     {
 
-        Console.WriteLine(memberIds.Count);
-        Console.WriteLine(string.Join(", ", memberIds));
-        Console.WriteLine("--------------------------------");
-
         var members = await context.Members
                                     .Where(m => memberIds.Contains(m.Id))
                                     .ToListAsync(cancellationToken);
 
-        Console.WriteLine(memberIds.Count);
-        Console.WriteLine(string.Join(", ", memberIds));
 
         if (members.Count != memberIds.Count)
         {

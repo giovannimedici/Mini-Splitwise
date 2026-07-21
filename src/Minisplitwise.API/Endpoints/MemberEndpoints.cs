@@ -1,6 +1,8 @@
 using Minisplitwise.Application.Members;
 using Minisplitwise.Application.Interfaces;
-using FluentValidation;
+using FluentValidation; 
+using Minisplitwise.API.Authorization;
+
 
 namespace Minisplitwise.API.Endpoints;
 
@@ -8,13 +10,16 @@ public static class MemberEndpoints
 {
     public static void MapMemberEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/members", CreateMemberAsync)
+        var members = app.MapGroup("/members")
+                        .AddEndpointFilter<JwtEndpointFilter>();
+
+        members.MapPost("", CreateMemberAsync)
             .WithName("CreateMember")
             .WithTags("Members")
             .WithSummary("Create a new member")
             .WithDescription("Create a new member with the given name, email and birth date");
             
-        app.MapGet("/members", GetAllMembersAsync)
+        members.MapGet("", GetAllMembersAsync)
             .WithName("GetAllMembers")
             .WithTags("Members")
             .WithSummary("Get all members")

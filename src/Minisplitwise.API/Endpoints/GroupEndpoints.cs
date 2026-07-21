@@ -1,6 +1,7 @@
 using Minisplitwise.Application.Groups;
 using Minisplitwise.Application.Interfaces;
 using FluentValidation;
+using Minisplitwise.API.Authorization;
 
 namespace Minisplitwise.API.Endpoints;
 
@@ -8,13 +9,16 @@ public static class GroupEndpoints
 {
     public static void MapGroupEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/groups", CreateGroupAsync)
+        var groups = app.MapGroup("/groups")
+                        .AddEndpointFilter<JwtEndpointFilter>();
+
+        groups.MapPost("", CreateGroupAsync)
             .WithName("CreateGroup")
             .WithTags("Groups")
             .WithSummary("Create a new group")
             .WithDescription("Create a new group with the given name and member ids");
         
-        app.MapPost("/groups/add-member", AddMemberToGroupAsync)
+        groups.MapPost("/add-member", AddMemberToGroupAsync)
             .WithName("AddMemberToGroup")
             .WithTags("Groups")
             .WithSummary("Add a member to a group")

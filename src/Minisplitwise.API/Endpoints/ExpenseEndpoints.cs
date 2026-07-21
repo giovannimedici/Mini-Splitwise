@@ -1,6 +1,7 @@
 using Minisplitwise.Application.Expenses;
 using Minisplitwise.Application.Interfaces;
 using FluentValidation;
+using Minisplitwise.API.Authorization;
 
 namespace Minisplitwise.API.Endpoints;
 
@@ -8,25 +9,28 @@ public static class ExpenseEndpoints
 {
     public static void MapExpenseEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/expenses", CreateExpenseAsync)
+        var expenses = app.MapGroup("/expenses")
+                        .AddEndpointFilter<JwtEndpointFilter>();
+
+        expenses.MapPost("", CreateExpenseAsync)
             .WithName("CreateExpense")
             .WithTags("Expenses")
             .WithSummary("Create a new expense")
             .WithDescription("Create a new expense with the given description, amount, date, group id, paid by id and shared with ids");
         
-        app.MapGet("/expenses/{groupId}", GetExpensesByGroupIdAsync)
+        expenses.MapGet("/{groupId}", GetExpensesByGroupIdAsync)
             .WithName("GetExpensesByGroupId")
             .WithTags("Expenses")
             .WithSummary("Get all expenses by group id")
             .WithDescription("Get all expenses by group id");
         
-        app.MapGet("/expenses/{memberId}/{groupId}", GetExpensesByMemberIdAsync)
+        expenses.MapGet("/{memberId}/{groupId}", GetExpensesByMemberIdAsync)
             .WithName("GetExpensesByMemberId")
             .WithTags("Expenses")
             .WithSummary("Get all expenses by member id and group id")
             .WithDescription("Get all expenses by member id and group id");
             
-        app.MapGet("/expenses/{groupId}/payments", CalculatePaymentsByGroupIdAsync)
+        expenses.MapGet("/{groupId}/payments", CalculatePaymentsByGroupIdAsync)
             .WithName("CalculatePaymentsByGroupId")
             .WithTags("Expenses")
             .WithSummary("Calculate payments by group id")
