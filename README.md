@@ -70,6 +70,7 @@ API Endpoint  ──►  FluentValidation  ──►  Application Service
 | Runtime | .NET | 8.0 |
 | Web framework | ASP.NET Core Minimal APIs | 8.0 |
 | API docs | Swashbuckle (Swagger) | 6.6.2 |
+| Authentication | JWT bearer tokens (`QuickJwt.AspNetCore`) | 1.0.2 |
 | Validation | FluentValidation | 12.1.1 |
 | ORM | Entity Framework Core | 8.0.28 |
 | Database | SQLite | via EF Core provider 8.0.28 |
@@ -98,12 +99,30 @@ Wait until the API is ready, then open Swagger UI:
 http://localhost:8080/swagger
 ```
 
-### First request
+### Authentication
+
+All `/members`, `/groups`, and `/expenses` endpoints require a JWT bearer token. The API validates tokens signed with the symmetric key in `Jwt:Key`; it validates the signature and expiration, but does not require an issuer, audience, or specific claims.
+
+For local development, a key is configured in `appsettings.Development.json`. Override it outside development with the `Jwt__Key` environment variable:
+
+```bash
+export Jwt__Key="replace-with-a-long-random-secret"
+dotnet run --project src/Minisplitwise.API
+```
+
+The API deliberately does not expose login or token-issuance endpoints. Obtain a valid, non-expired HS256 token from your identity provider or token-generation tool using the configured key, then set it once for the examples below:
+
+```bash
+export TOKEN="YOUR_SIGNED_JWT"
+```
+
+### First authenticated request
 
 Verify the API is alive by listing members (returns an empty array on a fresh database):
 
 ```bash
-curl -s http://localhost:8080/members
+curl -s http://localhost:8080/members \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 Expected response:
@@ -175,10 +194,12 @@ All examples assume the API is running at `http://localhost:8080`. Run them in o
 ```bash
 curl -s -X POST http://localhost:8080/members \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{"name":"Alice","email":"alice@example.com","birthDate":"1990-01-15"}'
 
 curl -s -X POST http://localhost:8080/members \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{"name":"Bob","email":"bob@example.com","birthDate":"1992-06-20"}'
 ```
 
@@ -187,7 +208,8 @@ Save the `id` values from each response as `ALICE_ID` and `BOB_ID`.
 ### 2. List all members
 
 ```bash
-curl -s http://localhost:8080/members
+curl -s http://localhost:8080/members \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### 3. Create a group
@@ -197,6 +219,7 @@ Requires at least two member IDs.
 ```bash
 curl -s -X POST http://localhost:8080/groups \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{"name":"Trip to the beach","memberIds":["ALICE_ID","BOB_ID"]}'
 ```
 
@@ -208,10 +231,12 @@ Save the returned `id` as `GROUP_ID`.
 # Create a third member first, then add them:
 curl -s -X POST http://localhost:8080/members \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{"name":"Carol","email":"carol@example.com","birthDate":"1988-03-10"}'
 
 curl -s -X POST http://localhost:8080/groups/add-member \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{"groupId":"GROUP_ID","memberId":"CAROL_ID"}'
 ```
 
@@ -222,6 +247,7 @@ Alice pays $90 for dinner, shared with Bob and Carol.
 ```bash
 curl -s -X POST http://localhost:8080/expenses \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "description": "Dinner",
     "amount": 90.00,
@@ -236,7 +262,8 @@ curl -s -X POST http://localhost:8080/expenses \
 ### 6. List expenses by group
 
 ```bash
-curl -s http://localhost:8080/expenses/GROUP_ID
+curl -s http://localhost:8080/expenses/GROUP_ID \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### 7. List expenses for a member in a group
@@ -244,7 +271,8 @@ curl -s http://localhost:8080/expenses/GROUP_ID
 Shows each member's share (amount divided equally).
 
 ```bash
-curl -s http://localhost:8080/expenses/BOB_ID/GROUP_ID
+curl -s http://localhost:8080/expenses/BOB_ID/GROUP_ID \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### 8. Calculate settlement payments
@@ -252,7 +280,8 @@ curl -s http://localhost:8080/expenses/BOB_ID/GROUP_ID
 Returns who should pay whom to settle all debts in the group.
 
 ```bash
-curl -s http://localhost:8080/expenses/GROUP_ID/payments
+curl -s http://localhost:8080/expenses/GROUP_ID/payments \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Run unit tests
@@ -263,7 +292,7 @@ dotnet test
 
 ## Known Limitations
 
-- **No authentication or authorization** — All endpoints are public; not suitable for production as-is.
+- **No identity or token-issuance endpoints** — The API validates bearer tokens but does not authenticate users, issue tokens, or apply authorization policies/roles. Integrate an identity provider before production use.
 - **No message broker** — Processing is fully synchronous; there is no event bus or background consumer.
 - **SQLite only** — Single-file database; not designed for high concurrency or horizontal scaling.
 - **Equal splits only** — Expenses are divided evenly; custom percentages or itemized splits are not supported.
